@@ -1,0 +1,12 @@
+{
+  "name": "tachyon-maid",
+  "version": "1.0.0",
+  "description": "Tachyon Maid Discord bot server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
