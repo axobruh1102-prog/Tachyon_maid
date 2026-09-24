@@ -7,17 +7,9 @@ const {
   SlashCommandBuilder
 } = require("discord.js");
 
-// =========================
-// ENVIRONMENT VARIABLES
-// =========================
-
 const TOKEN = process.env.DISCORD_TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
 const PORT = process.env.PORT || 10000;
-
-// =========================
-// CHECK ENV
-// =========================
 
 if (!TOKEN) {
   console.error("ERROR: DISCORD_TOKEN is missing!");
@@ -32,10 +24,6 @@ if (!CLIENT_ID) {
 console.log("CLIENT_ID loaded:", CLIENT_ID);
 console.log("DISCORD_TOKEN loaded:", !!TOKEN);
 
-// =========================
-// EXPRESS SERVER
-// =========================
-
 const app = express();
 
 app.get("/", (req, res) => {
@@ -46,28 +34,16 @@ app.listen(PORT, () => {
   console.log(Server running on port ${PORT});
 });
 
-// =========================
-// DISCORD CLIENT
-// =========================
-
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds
   ]
 });
 
-// =========================
-// SLASH COMMAND
-// =========================
-
 const maidCommand = new SlashCommandBuilder()
   .setName("maid")
   .setDescription("Tachyon Maid command")
   .toJSON();
-
-// =========================
-// REGISTER SLASH COMMAND
-// =========================
 
 async function registerCommands() {
   try {
@@ -89,19 +65,10 @@ async function registerCommands() {
   }
 }
 
-// =========================
-// BOT READY
-// =========================
-
 client.once("clientReady", async () => {
   console.log(Bot is online as ${client.user.tag});
-
   await registerCommands();
 });
-
-// =========================
-// COMMAND HANDLER
-// =========================
 
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
@@ -111,11 +78,6 @@ client.on("interactionCreate", async (interaction) => {
   }
 });
 
-// =========================
-// LOGIN
-// =========================
-
 client.login(TOKEN);
-
 
 
