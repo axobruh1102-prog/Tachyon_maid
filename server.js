@@ -33,4 +33,24 @@ client.on("messageCreate", (message) => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
+const { REST, Routes, SlashCommandBuilder } = require("discord.js");
 
+const commands = [
+  new SlashCommandBuilder()
+    .setName("maid")
+    .setDescription("Gọi Maid Tachyon")
+].map(command => command.toJSON());
+const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
+
+(async () => {
+  try {
+    await rest.put(
+      Routes.applicationCommands(process.env.CLIENT_ID),
+      { body: commands }
+    );
+
+    console.log("Slash command /maid registered!");
+  } catch (error) {
+    console.error(error);
+  }
+})();
