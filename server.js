@@ -7,9 +7,17 @@ const {
   SlashCommandBuilder
 } = require("discord.js");
 
+// =========================
+// ENV
+// =========================
+
 const TOKEN = process.env.DISCORD_TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
 const PORT = process.env.PORT || 10000;
+
+// =========================
+// CHECK ENV
+// =========================
 
 if (!TOKEN) {
   console.error("ERROR: DISCORD_TOKEN is missing!");
@@ -21,18 +29,26 @@ if (!CLIENT_ID) {
   process.exit(1);
 }
 
-console.log("CLIENT_ID loaded:", CLIENT_ID);
-console.log("DISCORD_TOKEN loaded:", !!TOKEN);
+console.log("CLIENT_ID loaded: " + CLIENT_ID);
+console.log("DISCORD_TOKEN loaded: " + Boolean(TOKEN));
+
+// =========================
+// EXPRESS SERVER
+// =========================
 
 const app = express();
 
-app.get("/", (req, res) => {
+app.get("/", function (req, res) {
   res.send("Tachyon Maid is online!");
 });
 
-app.listen(PORT, () => {
-  console.log(Server running on port ${PORT});
+app.listen(PORT, function () {
+  console.log("Server running on port " + PORT);
 });
+
+// =========================
+// DISCORD CLIENT
+// =========================
 
 const client = new Client({
   intents: [
@@ -40,16 +56,26 @@ const client = new Client({
   ]
 });
 
+// =========================
+// SLASH COMMAND
+// =========================
+
 const maidCommand = new SlashCommandBuilder()
   .setName("maid")
   .setDescription("Tachyon Maid command")
   .toJSON();
 
+// =========================
+// REGISTER COMMAND
+// =========================
+
 async function registerCommands() {
   try {
     console.log("Registering slash commands...");
 
-    const rest = new REST({ version: "10" }).setToken(TOKEN);
+    const rest = new REST({
+      version: "10"
+    }).setToken(TOKEN);
 
     await rest.post(
       Routes.applicationCommands(CLIENT_ID),
@@ -65,19 +91,32 @@ async function registerCommands() {
   }
 }
 
-client.once("clientReady", async () => {
-  console.log(Bot is online as ${client.user.tag});
+// =========================
+// BOT READY
+// =========================
+
+client.once("clientReady", async function () {
+  console.log("Bot is online as " + client.user.tag);
+
   await registerCommands();
 });
 
-client.on("interactionCreate", async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
+// =========================
+// COMMAND HANDLER
+// =========================
+
+client.on("interactionCreate", async function (interaction) {
+  if (!interaction.isChatInputCommand()) {
+    return;
+  }
 
   if (interaction.commandName === "maid") {
     await interaction.reply("Maid Tachyon reporting! 🫡");
   }
 });
 
+// =========================
+// LOGIN
+// =========================
+
 client.login(TOKEN);
-
-
