@@ -4,16 +4,14 @@ const { Client, GatewayIntentBits } = require("discord.js");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Web server
 app.get("/", (req, res) => {
-  res.send("🗿 Maid Tachyon is alive!");
+  res.send("Maid Tachyon is alive!");
 });
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log("🌐 Server running on port " + PORT);
+  console.log("Server running on port " + PORT);
 });
 
-// Discord bot
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -23,14 +21,14 @@ const client = new Client({
 });
 
 client.once("ready", () => {
-  console.log("🤖 " + client.user.tag + " is online!");
+  console.log("Bot is online!");
 });
 
 client.on("messageCreate", (message) => {
   if (message.author.bot) return;
 
   if (message.content === "!ping") {
-    message.reply("🏓 Pong! Maid Tachyon đang sống!");
+    message.reply("Pong!");
   }
 });
 
