@@ -7,40 +7,40 @@ const {
   SlashCommandBuilder
 } = require("discord.js");
 
-const app = express();
-const PORT = process.env.PORT || 10000;
-
 // =========================
-// ENVIRONMENT VARIABLES
+// ENV
 // =========================
 
 const TOKEN = process.env.DISCORD_TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
+const PORT = process.env.PORT || 10000;
 
 // =========================
 // CHECK ENV
 // =========================
 
 if (!TOKEN) {
-  console.error("❌ DISCORD_TOKEN is missing!");
+  console.error("DISCORD_TOKEN is missing!");
   process.exit(1);
 }
 
 if (!CLIENT_ID) {
-  console.error("❌ CLIENT_ID is missing!");
+  console.error("CLIENT_ID is missing!");
   process.exit(1);
 }
 
 // =========================
-// EXPRESS SERVER
+// WEB SERVER FOR RENDER
 // =========================
 
+const app = express();
+
 app.get("/", (req, res) => {
-  res.send("Tachyon Maid is online! 🧪");
+  res.send("Tachyon Maid is online!");
 });
 
 app.listen(PORT, () => {
-console.log(🌐 Server running on port ${PORT});
+  console.log("Server running on port " + PORT);
 });
 
 // =========================
@@ -49,18 +49,13 @@ console.log(🌐 Server running on port ${PORT});
 
 const client = new Client({
   intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
+    GatewayIntentBits.Guilds
   ]
 });
 
 // =========================
 // SLASH COMMANDS
 // =========================
-
-// Discord slash command names MUST be lowercase.
-// So use /maid, NOT /Maid.
 
 const commands = [
   new SlashCommandBuilder()
@@ -70,12 +65,12 @@ const commands = [
 ];
 
 // =========================
-// REGISTER COMMANDS
+// REGISTER SLASH COMMANDS
 // =========================
 
 async function registerCommands() {
   try {
-    console.log("🔄 Registering slash commands...");
+    console.log("Registering slash commands...");
 
     const rest = new REST({ version: "10" }).setToken(TOKEN);
 
@@ -86,9 +81,9 @@ async function registerCommands() {
       }
     );
 
-    console.log("✅ Slash commands registered successfully!");
+    console.log("Slash command /maid registered!");
   } catch (error) {
-    console.error("❌ Failed to register slash commands:");
+    console.error("Failed to register slash commands:");
     console.error(error);
   }
 }
@@ -98,7 +93,7 @@ async function registerCommands() {
 // =========================
 
 client.once("clientReady", async () => {
-  console.log(🤖 Bot is online as ${client.user.tag});
+  console.log("Bot is online as " + client.user.tag);
 
   await registerCommands();
 });
@@ -108,22 +103,12 @@ client.once("clientReady", async () => {
 // =========================
 
 client.on("interactionCreate", async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
+  if (!interaction.isChatInputCommand()) {
+    return;
+  }
 
   if (interaction.commandName === "maid") {
-    await interaction.reply("🧪 Maid Tachyon reporting!");
-  }
-});
-
-// =========================
-// OPTIONAL MESSAGE HANDLER
-// =========================
-
-client.on("messageCreate", async (message) => {
-  if (message.author.bot) return;
-
-  if (message.content === "!ping") {
-    await message.reply("Pong! 🏓");
+    await interaction.reply("Maid Tachyon reporting!");
   }
 });
 
@@ -132,4 +117,5 @@ client.on("messageCreate", async (message) => {
 // =========================
 
 client.login(TOKEN);
+
 
