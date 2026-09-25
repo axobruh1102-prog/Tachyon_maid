@@ -16,22 +16,22 @@ console.log("TACHYON MAID STARTING");
 console.log("================================");
 
 if (!TOKEN) {
-  console.error("ERROR: DISCORD_TOKEN IS MISSING");
+  console.error("ERROR: DISCORD_TOKEN is missing!");
   process.exit(1);
 }
 
 if (!CLIENT_ID) {
-  console.error("ERROR: CLIENT_ID IS MISSING");
+  console.error("ERROR: CLIENT_ID is missing!");
   process.exit(1);
 }
 
-console.log("CLIENT_ID: " + CLIENT_ID);
-console.log("TOKEN EXISTS: true");
+console.log("CLIENT_ID loaded: " + CLIENT_ID);
+console.log("DISCORD_TOKEN loaded: true");
 console.log("PORT: " + PORT);
 
-// =================================
-// EXPRESS
-// =================================
+// ========================================
+// EXPRESS / RENDER
+// ========================================
 
 const app = express();
 
@@ -40,19 +40,20 @@ app.get("/", function (req, res) {
 });
 
 app.get("/health", function (req, res) {
-  res.json({
+  res.status(200).json({
     server: "online",
     discord: client.isReady()
   });
 });
 
 app.listen(PORT, "0.0.0.0", function () {
-  console.log("HTTP server running on port " + PORT);
+  console.log("HTTP server running on 0.0.0.0:" + PORT);
+  console.log("Render port detected successfully.");
 });
 
-// =================================
+// ========================================
 // DISCORD CLIENT
-// =================================
+// ========================================
 
 const client = new Client({
   intents: [
@@ -62,9 +63,28 @@ const client = new Client({
   ]
 });
 
-// =================================
-// DISCORD DEBUG
-// =================================
+// ========================================
+// SLASH COMMAND
+// ========================================
+
+const maidCommand = new SlashCommandBuilder()
+  .setName("maid")
+  .setDescription("Tachyon Maid command")
+  .toJSON();
+
+// ========================================
+// DISCORD EVENTS
+// ========================================
+
+client.once("clientReady", async function () {
+  console.log("================================");
+  console.log("DISCORD BOT ONLINE");
+  console.log("Bot: " + client.user.tag);
+  console.log("Bot ID: " + client.user.id);
+console.log("================================");
+
+  await registerCommand();
+});
 
 client.on("debug", function (message) {
   console.log("[DISCORD DEBUG] " + message);
@@ -85,72 +105,16 @@ client.on("shardError", function (error) {
 });
 
 client.on("shardReconnecting", function () {
-  console.log("[SHARD] Reconnecting...");
+  console.log("[DISCORD] Reconnecting...");
 });
 
-client.on("shardDisconnect", function (event) {
-  console.error("[SHARD] Disconnected");
-  console.error(event);
+client.on("shardDisconnect", function () {
+  console.log("[DISCORD] Disconnected.");
 });
 
-// =================================
-// COMMAND
-// =================================
-
-const maidCommand = new SlashCommandBuilder()
-  .setName("maid")
-  .setDescription("Tachyon Maid command")
-  .toJSON();
-
-// =================================
-// TEST DISCORD TOKEN
-// =================================
-
-async function testDiscordToken() {
-  console.log("================================");
-  console.log("TESTING DISCORD TOKEN...");
-  console.log("================================");
-
-  try {
-    const response = await fetch(
-      "https://discord.com/api/v10/users/@me",
-      {
-        method: "GET",
-        headers: {
-          Authorization: "Bot " + TOKEN
-        },
-        signal: AbortSignal.timeout(10000)
-      }
-    );
-
-    const text = await response.text();
-
-    console.log("Discord API HTTP status: " + response.status);
-
-    if (!response.ok) {
-      console.error("DISCORD TOKEN TEST FAILED");
-      console.error(text);
-      return false;
-    }
-
-    const data = JSON.parse(text);
-
-    console.log("DISCORD TOKEN IS VALID");
-    console.log("Discord username: " + data.username);
-    console.log("Discord ID: " + data.id);
-
-    return true;
-
-  } catch (error) {
-    console.error("DISCORD API CONNECTION TEST FAILED");
-    console.error(error);
-    return false;
-  }
-}
-
-// =================================
-// REGISTER COMMAND
-// =================================
+// ========================================
+// REGISTER /MAID
+// ========================================
 
 async function registerCommand() {
   console.log("Registering /maid...");
@@ -167,7 +131,7 @@ async function registerCommand() {
       }
     );
 
-    console.log("/maid registered successfully");
+    console.log("/maid registered successfully!");
 
   } catch (error) {
     console.error("COMMAND REGISTRATION FAILED");
@@ -184,23 +148,9 @@ async function registerCommand() {
   }
 }
 
-// =================================
-// READY
-// =================================
-
-client.once("clientReady", async function () {
-  console.log("================================");
-  console.log("DISCORD BOT ONLINE");
-  console.log("Bot: " + client.user.tag);
-  console.log("ID: " + client.user.id);
-  console.log("================================");
-
-  await registerCommand();
-});
-
-// =================================
+// ========================================
 // COMMAND HANDLER
-// =================================
+// ========================================
 
 client.on("interactionCreate", async function (interaction) {
 
@@ -209,51 +159,44 @@ client.on("interactionCreate", async function (interaction) {
   }
 
   if (interaction.commandName === "maid") {
-    await interaction.reply("Maid Tachyon reporting! 🫡");
+
+    try {
+      await interaction.reply(
+        "Maid Tachyon reporting! 🫡"
+      );
+    } catch (error) {
+      console.error("Reply failed:");
+      console.error(error);
+    }
+
   }
 });
 
-// =================================
-// START
-// =================================
+// ========================================
+// NODE ERROR HANDLING
+// ========================================
 
-async function startBot() {
+process.on("unhandledRejection", function (error) {
+  console.error("UNHANDLED REJECTION:");
+  console.error(error);
+});
 
-  const valid = await testDiscordToken();
+process.on("uncaughtException", function (error) {
+  console.error("UNCAUGHT EXCEPTION:");
+  console.error(error);
+});
 
-  if (!valid) {
-    console.error("Stopping bot because Discord API test failed.");
-    process.exit(1);
-  }
+// ========================================
+// DISCORD LOGIN
+// ========================================
 
-  console.log("Discord API works.");
-  console.log("Connecting to Discord Gateway...");
+console.log("Connecting to Discord Gateway...");
 
-  const loginTimeout = setTimeout(function () {
-
-    console.error("================================");
-    console.error("DISCORD GATEWAY TIMEOUT");
-    console.error("================================");
-    console.error(
-      "Discord REST API works, but Gateway connection did not finish within 20 seconds."
-    );
-
-    process.exit(1);
-
-  }, 20000);
-
-  try {
-
-    await client.login(TOKEN);
-
-    clearTimeout(loginTimeout);
-
-    console.log("Discord Gateway login completed.");
-
-  } catch (error) {
-
-    clearTimeout(loginTimeout);
-
+client.login(TOKEN)
+  .then(function () {
+    console.log("Discord login request accepted.");
+  })
+  .catch(function (error) {
     console.error("================================");
     console.error("DISCORD LOGIN FAILED");
     console.error("================================");
@@ -267,19 +210,4 @@ async function startBot() {
     }
 
     console.error(error);
-
-    process.exit(1);
-  }
-}
-
-process.on("unhandledRejection", function (error) {
-  console.error("UNHANDLED REJECTION");
-  console.error(error);
-});
-
-process.on("uncaughtException", function (error) {
-  console.error("UNCAUGHT EXCEPTION");
-  console.error(error);
-});
-
-startBot();
+  });
