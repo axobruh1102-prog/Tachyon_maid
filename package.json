@@ -1,13 +1,13 @@
 {
   "name": "tachyon-maid",
   "version": "1.0.0",
-  "description": "Tachyon Maid Discord Gateway connection test",
+  "description": "Tachyon Maid Discord bot",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^5.1.0",
-    "ws": "^8.18.0"
+    "discord.js": "^14.25.1"
   }
 }
