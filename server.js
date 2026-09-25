@@ -1,11 +1,9 @@
-const express = require("express");
 const WebSocket = require("ws");
 
 const TOKEN = process.env.DISCORD_TOKEN;
-const PORT = Number(process.env.PORT) || 10000;
 
 console.log("================================");
-console.log("GATEWAY CONNECTION TEST");
+console.log("DISCORD GATEWAY IDENTIFY TEST");
 console.log("================================");
 
 if (!TOKEN) {
@@ -13,63 +11,102 @@ if (!TOKEN) {
   process.exit(1);
 }
 
-const app = express();
+const ws = new WebSocket(
+  "wss://gateway.discord.gg/?v=10&encoding=json"
+);
 
-app.get("/", function (req, res) {
-  res.send("Gateway test server is alive!");
-});
-
-app.listen(PORT, "0.0.0.0", function () {
-  console.log("HTTP server running on port " + PORT);
-});
-
-console.log("Opening Discord Gateway...");
-
-const ws = new WebSocket("wss://gateway.discord.gg/?v=10&encoding=json");
+let heartbeatInterval = null;
+let connected = false;
 
 ws.on("open", function () {
-  console.log("================================");
-  console.log("GATEWAY WEBSOCKET CONNECTED");
-  console.log("================================");
+  console.log("WebSocket connected.");
 });
 
 ws.on("message", function (data) {
-  console.log("GATEWAY MESSAGE RECEIVED:");
+  const packet = JSON.parse(data.toString());
 
-  try {
-    const packet = JSON.parse(data.toString());
+  console.log("Received Opcode: " + packet.op);
 
-    console.log("Opcode: " + packet.op);
+  // Gateway Hello
+  if (packet.op === 10) {
+    console.log("HELLO received.");
 
-    if (packet.op === 10) {
-      console.log("DISCORD GATEWAY HELLO RECEIVED!");
-      console.log("Render can reach Discord Gateway.");
+    heartbeatInterval = packet.d.heartbeat_interval;
 
-      ws.close();
+    console.log(
+      "Heartbeat interval: " + heartbeatInterval + "ms"
+    );
+
+    // IDENTIFY
+    ws.send(JSON.stringify({
+      op: 2,
+      d: {
+        token: TOKEN,
+        intents: 1,
+        properties: {
+          os: "linux",
+          browser: "tachyon-maid",
+          device: "tachyon-maid"
+        }
+      }
+    }));
+
+    console.log("IDENTIFY packet sent.");
+  }
+
+  // Heartbeat request
+  if (packet.op === 1) {
+    console.log("Heartbeat requested.");
+
+    ws.send(JSON.stringify({
+      op: 1,
+      d: null
+    }));
+  }
+
+  // Heartbeat ACK
+  if (packet.op === 11) {
+    console.log("Heartbeat ACK received.");
+  }
+
+  // READY
+  if (packet.op === 0 && packet.t === "READY") {
+    console.log("================================");
+    console.log("DISCORD GATEWAY LOGIN SUCCESS!");
+    console.log("================================");
+
+    if (packet.d && packet.d.user) {
+      console.log(
+        "Bot username: " +
+        packet.d.user.username
+      );
     }
-  } catch (error) {
-    console.error("Failed to parse Gateway message:");
-    console.error(error);
+
+    connected = true;
+
+    setTimeout(function () {
+      ws.close();
+    }, 3000);
   }
 });
 
 ws.on("error", function (error) {
   console.error("================================");
-  console.error("GATEWAY WEBSOCKET ERROR");
+  console.error("WEBSOCKET ERROR");
   console.error("================================");
   console.error(error);
 });
 
 ws.on("close", function (code, reason) {
-  console.log("Gateway connection closed.");
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+  }
+
+  console.log("Gateway closed.");
   console.log("Code: " + code);
   console.log("Reason: " + reason.toString());
-});
 
-setTimeout(function () {
-  console.error("================================");
-  console.error("GATEWAY CONNECTION TIMEOUT");
-  console.error("================================");
-  console.error("No Gateway response after 20 seconds.");
-  process.exit(1);
-}, 20000);
+  if (!connected) {
+    console.error("Gateway login did NOT reach READY.");
+  }
+});
