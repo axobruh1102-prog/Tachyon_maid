@@ -1,4 +1,5 @@
 const express = require("express");
+
 const {
   Client,
   GatewayIntentBits,
@@ -8,7 +9,7 @@ const {
 } = require("discord.js");
 
 // =========================
-// ENV
+// CONFIG
 // =========================
 
 const TOKEN = process.env.DISCORD_TOKEN;
@@ -38,11 +39,21 @@ console.log("DISCORD_TOKEN loaded: " + Boolean(TOKEN));
 
 const app = express();
 
+app.use(express.json());
+
 app.get("/", function (req, res) {
-  res.send("Tachyon Maid is online!");
+  res.status(200).send("Tachyon Maid is online! 🫡");
 });
 
-app.listen(PORT "0.0.0.0" , function () {
+app.get("/health", function (req, res) {
+  res.status(200).json({
+    status: "online",
+    bot: "Tachyon Maid"
+  });
+});
+
+// IMPORTANT FOR RENDER
+app.listen(PORT, "0.0.0.0", function () {
   console.log("Server running on port " + PORT);
 });
 
@@ -52,12 +63,14 @@ app.listen(PORT "0.0.0.0" , function () {
 
 const client = new Client({
   intents: [
-    GatewayIntentBits.Guilds
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
   ]
 });
 
 // =========================
-// SLASH COMMAND
+// SLASH COMMANDS
 // =========================
 
 const maidCommand = new SlashCommandBuilder()
@@ -66,7 +79,7 @@ const maidCommand = new SlashCommandBuilder()
   .toJSON();
 
 // =========================
-// REGISTER COMMAND
+// REGISTER COMMANDS
 // =========================
 
 async function registerCommands() {
@@ -102,7 +115,7 @@ client.once("clientReady", async function () {
 });
 
 // =========================
-// COMMAND HANDLER
+// INTERACTIONS
 // =========================
 
 client.on("interactionCreate", async function (interaction) {
@@ -111,12 +124,36 @@ client.on("interactionCreate", async function (interaction) {
   }
 
   if (interaction.commandName === "maid") {
-    await interaction.reply("Maid Tachyon reporting! 🫡");
+    await interaction.reply(
+      "Maid Tachyon reporting! 🫡"
+    );
   }
+});
+
+// =========================
+// ERROR HANDLING
+// =========================
+
+client.on("error", function (error) {
+  console.error("Discord client error:");
+  console.error(error);
+});
+
+process.on("unhandledRejection", function (error) {
+  console.error("Unhandled promise rejection:");
+  console.error(error);
+});
+
+process.on("uncaughtException", function (error) {
+  console.error("Uncaught exception:");
+  console.error(error);
 });
 
 // =========================
 // LOGIN
 // =========================
 
+console.log("Starting Discord bot...");
+
 client.login(TOKEN);
+
